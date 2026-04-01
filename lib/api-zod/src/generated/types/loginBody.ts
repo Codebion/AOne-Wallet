@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface CreateBudgetBody {
-  category: string;
-  limit: number;
-  color: string;
+export interface LoginBody {
+  username: string;
+  password: string;
 }

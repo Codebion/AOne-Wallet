@@ -6,8 +6,9 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface CreateBudgetBody {
-  category: string;
-  limit: number;
-  color: string;
+export interface NetWorthTrendPoint {
+  month: string;
+  netWorth: number;
+  investments: number;
+  cash: number;
 }

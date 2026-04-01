@@ -6,13 +6,12 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface Budget {
-  id: number;
+export interface CreateTransactionBody {
+  title: string;
+  amount: number;
+  type: string;
   category: string;
-  limit: number;
-  spent: number;
-  remaining: number;
-  percentage: number;
-  color: string;
-  createdAt: string;
+  date: string;
+  /** @nullable */
+  icon?: string | null;
 }

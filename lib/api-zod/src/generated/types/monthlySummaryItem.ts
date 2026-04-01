@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface SpendingTrendPoint {
+export interface MonthlySummaryItem {
   month: string;
-  expenses: number;
-  income: number;
-  savings: number;
+  totalExpenses: number;
+  totalIncome: number;
+  netSavings: number;
+  savingsRate: number;
+  expenseCount: number;
 }

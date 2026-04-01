@@ -3,24 +3,33 @@
  * Do not edit manually.
  * Api
  * AOneLazer Finance API specification
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export * from "./allocationItem";
+export * from "./authUser";
 export * from "./budget";
 export * from "./categoryBreakdown";
+export * from "./changePasswordBody";
+export * from "./changeUsernameBody";
 export * from "./createBudgetBody";
 export * from "./createExpenseBody";
 export * from "./createInvestmentBody";
+export * from "./createTransactionBody";
 export * from "./dashboardSummary";
 export * from "./expense";
 export * from "./healthStatus";
 export * from "./investment";
 export * from "./listExpensesParams";
 export * from "./listTransactionsParams";
+export * from "./loginBody";
+export * from "./monthlySummaryItem";
+export * from "./netWorthTrendPoint";
 export * from "./portfolioSummary";
 export * from "./spendingTrendPoint";
+export * from "./topExpenseItem";
 export * from "./transaction";
 export * from "./updateBudgetBody";
 export * from "./updateExpenseBody";
 export * from "./updateInvestmentBody";
+export * from "./updateProfileBody";

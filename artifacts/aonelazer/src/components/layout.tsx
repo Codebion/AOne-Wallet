@@ -1,6 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Receipt, LineChart, Wallet, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, Receipt, LineChart, Wallet, ArrowRightLeft, PieChart, User, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -8,19 +10,27 @@ const navItems = [
   { href: "/investments", label: "Investments", icon: LineChart },
   { href: "/budgets", label: "Budgets", icon: Wallet },
   { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
+  { href: "/analytics", label: "Analytics", icon: PieChart },
+  { href: "/account", label: "Account", icon: User },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
+  const cycleTheme = () => {
+    if (theme === 'dark') setTheme('light');
+    else if (theme === 'light') setTheme('system');
+    else setTheme('dark');
+  };
+
+  const initial = user?.name ? user.name.charAt(0).toUpperCase() : user?.username?.charAt(0).toUpperCase() || 'U';
 
   return (
     <div className="flex min-h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card/50 backdrop-blur-xl flex flex-col fixed inset-y-0 left-0 z-50">
+      <aside className="w-64 border-r border-border bg-card flex flex-col fixed inset-y-0 left-0 z-50">
         <div className="p-6">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -52,12 +62,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 mt-auto">
-          <div className="p-4 rounded-lg border border-border/50 bg-black/20 text-xs">
-            <p className="text-muted-foreground mb-2">System Status</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
-              <span className="font-mono text-emerald-500">ALL SYSTEMS GO</span>
+        <div className="p-4 mt-auto space-y-4">
+          <div className="flex items-center justify-between px-3 py-2">
+            <button onClick={cycleTheme} className="p-2 hover:bg-secondary rounded-full text-muted-foreground transition-colors" title="Toggle Theme">
+              {theme === 'dark' ? <Moon className="w-4 h-4" /> : theme === 'light' ? <Sun className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+            </button>
+            <button onClick={() => logout()} className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-full text-muted-foreground transition-colors" title="Logout">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-3 px-3 py-2 border-t border-border pt-4">
+            <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <span className="font-bold text-sm text-primary">{initial}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.name || user?.username}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email || 'User'}</p>
             </div>
           </div>
         </div>
@@ -65,18 +86,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 ml-64 flex flex-col min-h-screen">
-        <header className="h-16 border-b border-border bg-background/80 backdrop-blur flex items-center px-8 sticky top-0 z-40">
-          <div className="flex-1" />
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-medium">Administrator</p>
-              <p className="text-xs text-muted-foreground">Admin Access</p>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center">
-              <span className="font-mono text-xs text-primary">AD</span>
-            </div>
-          </div>
-        </header>
         <div className="flex-1 p-8 overflow-y-auto">
           {children}
         </div>

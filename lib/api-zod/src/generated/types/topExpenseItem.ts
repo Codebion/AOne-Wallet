@@ -6,13 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface Budget {
-  id: number;
+export interface TopExpenseItem {
   category: string;
-  limit: number;
-  spent: number;
-  remaining: number;
+  amount: number;
+  count: number;
   percentage: number;
   color: string;
-  createdAt: string;
 }

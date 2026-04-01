@@ -4,7 +4,6 @@ import { db, investmentsTable } from "@workspace/db";
 import {
   CreateInvestmentBody,
   UpdateInvestmentBody,
-  GetInvestmentParams,
   UpdateInvestmentParams,
   DeleteInvestmentParams,
 } from "@workspace/api-zod";
@@ -88,26 +87,6 @@ router.post("/investments", async (req, res): Promise<void> => {
     .returning();
 
   res.status(201).json(formatInvestment(investment));
-});
-
-router.get("/investments/:id", async (req, res): Promise<void> => {
-  const params = GetInvestmentParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const [investment] = await db
-    .select()
-    .from(investmentsTable)
-    .where(eq(investmentsTable.id, params.data.id));
-
-  if (!investment) {
-    res.status(404).json({ error: "Investment not found" });
-    return;
-  }
-
-  res.json(formatInvestment(investment));
 });
 
 router.patch("/investments/:id", async (req, res): Promise<void> => {

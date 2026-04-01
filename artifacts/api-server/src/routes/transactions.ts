@@ -34,4 +34,39 @@ router.get("/transactions", async (req, res): Promise<void> => {
   );
 });
 
+router.post("/transactions", async (req, res): Promise<void> => {
+  const { title, amount, type, category, date, icon } = req.body ?? {};
+  if (!title || !amount || !type || !category || !date) {
+    res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+
+  const [transaction] = await db
+    .insert(transactionsTable)
+    .values({ title, amount: String(amount), type, category, date, icon: icon ?? null })
+    .returning();
+
+  res.status(201).json({ ...transaction, amount: parseFloat(transaction.amount) });
+});
+
+router.delete("/transactions/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid ID" });
+    return;
+  }
+
+  const [deleted] = await db
+    .delete(transactionsTable)
+    .where(eq(transactionsTable.id, id))
+    .returning();
+
+  if (!deleted) {
+    res.status(404).json({ error: "Transaction not found" });
+    return;
+  }
+
+  res.sendStatus(204);
+});
+
 export default router;

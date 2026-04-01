@@ -3,12 +3,11 @@
  * Do not edit manually.
  * Api
  * AOneLazer Finance API specification
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -16,7 +15,83 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * Returns key financial metrics for the dashboard
+ * @summary Login
+ */
+export const LoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  name: zod.string(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  avatar: zod.string().nullish(),
+  role: zod.string(),
+});
+
+/**
+ * @summary Get current user
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  name: zod.string(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  avatar: zod.string().nullish(),
+  role: zod.string(),
+});
+
+/**
+ * @summary Update profile
+ */
+export const UpdateProfileBody = zod.object({
+  name: zod.string().optional(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  avatar: zod.string().nullish(),
+});
+
+export const UpdateProfileResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  name: zod.string(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  avatar: zod.string().nullish(),
+  role: zod.string(),
+});
+
+/**
+ * @summary Change password
+ */
+export const ChangePasswordBody = zod.object({
+  currentPassword: zod.string(),
+  newPassword: zod.string(),
+});
+
+/**
+ * @summary Change username
+ */
+export const ChangeUsernameBody = zod.object({
+  newUsername: zod.string(),
+  password: zod.string(),
+});
+
+export const ChangeUsernameResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  name: zod.string(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  avatar: zod.string().nullish(),
+  role: zod.string(),
+});
+
+/**
  * @summary Get dashboard summary
  */
 export const GetDashboardSummaryResponse = zod.object({
@@ -31,7 +106,6 @@ export const GetDashboardSummaryResponse = zod.object({
 });
 
 /**
- * Returns monthly spending trend data for charts
  * @summary Get spending trend
  */
 export const GetSpendingTrendResponseItem = zod.object({
@@ -43,7 +117,6 @@ export const GetSpendingTrendResponseItem = zod.object({
 export const GetSpendingTrendResponse = zod.array(GetSpendingTrendResponseItem);
 
 /**
- * Returns spending by category for pie chart
  * @summary Get expense category breakdown
  */
 export const GetCategoryBreakdownResponseItem = zod.object({
@@ -167,26 +240,6 @@ export const CreateInvestmentBody = zod.object({
 });
 
 /**
- * @summary Get investment by ID
- */
-export const GetInvestmentParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const GetInvestmentResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  ticker: zod.string().nullish(),
-  type: zod.string(),
-  currentValue: zod.number(),
-  purchaseValue: zod.number(),
-  shares: zod.number().nullish(),
-  gainLoss: zod.number(),
-  gainLossPercent: zod.number(),
-  createdAt: zod.string(),
-});
-
-/**
  * @summary Update an investment
  */
 export const UpdateInvestmentParams = zod.object({
@@ -223,7 +276,6 @@ export const DeleteInvestmentParams = zod.object({
 });
 
 /**
- * Returns total value, gain/loss, and allocation breakdown
  * @summary Get portfolio summary
  */
 export const GetPortfolioSummaryResponse = zod.object({
@@ -258,6 +310,25 @@ export const ListTransactionsResponseItem = zod.object({
   icon: zod.string().nullish(),
 });
 export const ListTransactionsResponse = zod.array(ListTransactionsResponseItem);
+
+/**
+ * @summary Create a transaction
+ */
+export const CreateTransactionBody = zod.object({
+  title: zod.string(),
+  amount: zod.number(),
+  type: zod.string(),
+  category: zod.string(),
+  date: zod.string(),
+  icon: zod.string().nullish(),
+});
+
+/**
+ * @summary Delete a transaction
+ */
+export const DeleteTransactionParams = zod.object({
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary List budgets
@@ -313,3 +384,41 @@ export const UpdateBudgetResponse = zod.object({
 export const DeleteBudgetParams = zod.object({
   id: zod.coerce.number(),
 });
+
+/**
+ * @summary Get monthly analytics summary
+ */
+export const GetMonthlySummaryResponseItem = zod.object({
+  month: zod.string(),
+  totalExpenses: zod.number(),
+  totalIncome: zod.number(),
+  netSavings: zod.number(),
+  savingsRate: zod.number(),
+  expenseCount: zod.number(),
+});
+export const GetMonthlySummaryResponse = zod.array(
+  GetMonthlySummaryResponseItem,
+);
+
+/**
+ * @summary Get top expense categories
+ */
+export const GetTopExpensesResponseItem = zod.object({
+  category: zod.string(),
+  amount: zod.number(),
+  count: zod.number(),
+  percentage: zod.number(),
+  color: zod.string(),
+});
+export const GetTopExpensesResponse = zod.array(GetTopExpensesResponseItem);
+
+/**
+ * @summary Get net worth trend
+ */
+export const GetNetWorthTrendResponseItem = zod.object({
+  month: zod.string(),
+  netWorth: zod.number(),
+  investments: zod.number(),
+  cash: zod.number(),
+});
+export const GetNetWorthTrendResponse = zod.array(GetNetWorthTrendResponseItem);

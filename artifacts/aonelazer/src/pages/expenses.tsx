@@ -3,6 +3,7 @@ import {
   useListExpenses, 
   useCreateExpense, 
   useDeleteExpense, 
+  useListBudgets,
   getListExpensesQueryKey 
 } from "@workspace/api-client-react";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -15,6 +16,10 @@ import { Plus, Trash2, Receipt } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const defaultCategories = [
+  "Food", "Housing", "Transport", "Entertainment", "Healthcare", "Dental", "Shopping", "Utilities", "Education", "Travel", "Personal", "Insurance", "Salary", "Freelance", "Investment Return", "Medical", "Gym", "Subscription", "Dining", "Fuel", "Other"
+];
 
 export default function Expenses() {
   const { data: expenses, isLoading } = useListExpenses();
@@ -114,11 +119,15 @@ export default function Expenses() {
 function AddExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
   const createMutation = useCreateExpense();
+  const { data: budgets } = useListBudgets();
   
+  const budgetCategories = budgets?.map(b => b.category) || [];
+  const uniqueCategories = Array.from(new Set([...budgetCategories, ...defaultCategories]));
+
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
-    category: "Housing",
+    category: budgetCategories.length > 0 ? budgetCategories[0] : "Housing",
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -193,12 +202,19 @@ function AddExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Housing">Housing</SelectItem>
-            <SelectItem value="Food">Food</SelectItem>
-            <SelectItem value="Transportation">Transportation</SelectItem>
-            <SelectItem value="Utilities">Utilities</SelectItem>
-            <SelectItem value="Entertainment">Entertainment</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
+            {budgetCategories.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Budget Categories</div>
+                {budgetCategories.map(cat => (
+                  <SelectItem key={`budget-${cat}`} value={cat}>{cat}</SelectItem>
+                ))}
+                <div className="h-px bg-border my-1" />
+              </>
+            )}
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">All Categories</div>
+            {uniqueCategories.filter(cat => !budgetCategories.includes(cat)).map(cat => (
+              <SelectItem key={`default-${cat}`} value={cat}>{cat}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

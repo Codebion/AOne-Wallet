@@ -3,10 +3,48 @@
  * Do not edit manually.
  * Api
  * AOneLazer Finance API specification
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
+}
+
+export interface LoginBody {
+  username: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  name: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  avatar?: string | null;
+  role: string;
+}
+
+export interface UpdateProfileBody {
+  name?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  avatar?: string | null;
+}
+
+export interface ChangePasswordBody {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangeUsernameBody {
+  newUsername: string;
+  password: string;
 }
 
 export interface DashboardSummary {
@@ -125,6 +163,16 @@ export interface Transaction {
   icon?: string | null;
 }
 
+export interface CreateTransactionBody {
+  title: string;
+  amount: number;
+  type: string;
+  category: string;
+  date: string;
+  /** @nullable */
+  icon?: string | null;
+}
+
 export interface Budget {
   id: number;
   category: string;
@@ -146,6 +194,30 @@ export interface UpdateBudgetBody {
   category?: string;
   limit?: number;
   color?: string;
+}
+
+export interface MonthlySummaryItem {
+  month: string;
+  totalExpenses: number;
+  totalIncome: number;
+  netSavings: number;
+  savingsRate: number;
+  expenseCount: number;
+}
+
+export interface TopExpenseItem {
+  category: string;
+  amount: number;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface NetWorthTrendPoint {
+  month: string;
+  netWorth: number;
+  investments: number;
+  cash: number;
 }
 
 export type ListExpensesParams = {

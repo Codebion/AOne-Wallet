@@ -6,13 +6,12 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface UpdateInvestmentBody {
+export interface UpdateProfileBody {
   name?: string;
   /** @nullable */
-  ticker?: string | null;
-  type?: string;
-  currentValue?: number;
-  purchaseValue?: number;
+  email?: string | null;
   /** @nullable */
-  shares?: number | null;
+  phone?: string | null;
+  /** @nullable */
+  avatar?: string | null;
 }

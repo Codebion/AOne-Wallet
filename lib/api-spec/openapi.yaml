@@ -1,31 +1,26 @@
 openapi: 3.1.0
 info:
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: AOneLazer Finance API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
   - name: expenses
-    description: Expense management
   - name: investments
-    description: Investment management
   - name: dashboard
-    description: Dashboard summary data
   - name: transactions
-    description: Transaction history
   - name: budgets
-    description: Budget management
+  - name: analytics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -34,12 +29,113 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+
+  /auth/update-profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordBody"
+      responses:
+        "200":
+          description: Password changed
+        "400":
+          description: Wrong current password
+
+  /auth/change-username:
+    post:
+      operationId: changeUsername
+      tags: [auth]
+      summary: Change username
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUsernameBody"
+      responses:
+        "200":
+          description: Username changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Username already taken
+
   /dashboard/summary:
     get:
       operationId: getDashboardSummary
       tags: [dashboard]
       summary: Get dashboard summary
-      description: Returns key financial metrics for the dashboard
       responses:
         "200":
           description: Dashboard summary
@@ -53,7 +149,6 @@ paths:
       operationId: getSpendingTrend
       tags: [dashboard]
       summary: Get spending trend
-      description: Returns monthly spending trend data for charts
       responses:
         "200":
           description: Spending trend data
@@ -69,7 +164,6 @@ paths:
       operationId: getCategoryBreakdown
       tags: [dashboard]
       summary: Get expense category breakdown
-      description: Returns spending by category for pie chart
       responses:
         "200":
           description: Category breakdown data
@@ -128,8 +222,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Expense"
-        "400":
-          description: Invalid input
 
   /expenses/{id}:
     get:
@@ -174,8 +266,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Expense"
-        "404":
-          description: Not found
     delete:
       operationId: deleteExpense
       tags: [expenses]
@@ -189,8 +279,6 @@ paths:
       responses:
         "204":
           description: Deleted
-        "404":
-          description: Not found
 
   /investments:
     get:
@@ -223,29 +311,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Investment"
-        "400":
-          description: Invalid input
 
   /investments/{id}:
-    get:
-      operationId: getInvestment
-      tags: [investments]
-      summary: Get investment by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Investment
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Investment"
-        "404":
-          description: Not found
     patch:
       operationId: updateInvestment
       tags: [investments]
@@ -269,8 +336,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Investment"
-        "404":
-          description: Not found
     delete:
       operationId: deleteInvestment
       tags: [investments]
@@ -284,15 +349,12 @@ paths:
       responses:
         "204":
           description: Deleted
-        "404":
-          description: Not found
 
   /investments/portfolio-summary:
     get:
       operationId: getPortfolioSummary
       tags: [investments]
       summary: Get portfolio summary
-      description: Returns total value, gain/loss, and allocation breakdown
       responses:
         "200":
           description: Portfolio summary
@@ -324,6 +386,38 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Transaction"
+    post:
+      operationId: createTransaction
+      tags: [transactions]
+      summary: Create a transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionBody"
+      responses:
+        "201":
+          description: Created transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /transactions/{id}:
+    delete:
+      operationId: deleteTransaction
+      tags: [transactions]
+      summary: Delete a transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   /budgets:
     get:
@@ -395,6 +489,51 @@ paths:
         "204":
           description: Deleted
 
+  /analytics/monthly-summary:
+    get:
+      operationId: getMonthlySummary
+      tags: [analytics]
+      summary: Get monthly analytics summary
+      responses:
+        "200":
+          description: Monthly summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlySummaryItem"
+
+  /analytics/top-expenses:
+    get:
+      operationId: getTopExpenses
+      tags: [analytics]
+      summary: Get top expense categories
+      responses:
+        "200":
+          description: Top expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopExpenseItem"
+
+  /analytics/net-worth-trend:
+    get:
+      operationId: getNetWorthTrend
+      tags: [analytics]
+      summary: Get net worth trend
+      responses:
+        "200":
+          description: Net worth trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NetWorthTrendPoint"
+
 components:
   schemas:
     HealthStatus:
@@ -402,8 +541,65 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        avatar:
+          type: ["string", "null"]
+        role:
+          type: string
+      required: [id, username, name, role]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        avatar:
+          type: ["string", "null"]
+
+    ChangePasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+      required: [currentPassword, newPassword]
+
+    ChangeUsernameBody:
+      type: object
+      properties:
+        newUsername:
+          type: string
+        password:
+          type: string
+      required: [newUsername, password]
 
     DashboardSummary:
       type: object
@@ -424,15 +620,7 @@ components:
           type: number
         investmentGain:
           type: number
-      required:
-        - totalBalance
-        - monthlyIncome
-        - monthlyExpenses
-        - totalInvestments
-        - savingsRate
-        - monthlyChange
-        - expenseChange
-        - investmentGain
+      required: [totalBalance, monthlyIncome, monthlyExpenses, totalInvestments, savingsRate, monthlyChange, expenseChange, investmentGain]
 
     SpendingTrendPoint:
       type: object
@@ -445,11 +633,7 @@ components:
           type: number
         savings:
           type: number
-      required:
-        - month
-        - expenses
-        - income
-        - savings
+      required: [month, expenses, income, savings]
 
     CategoryBreakdown:
       type: object
@@ -462,11 +646,7 @@ components:
           type: number
         color:
           type: string
-      required:
-        - category
-        - amount
-        - percentage
-        - color
+      required: [category, amount, percentage, color]
 
     Expense:
       type: object
@@ -485,13 +665,7 @@ components:
           type: string
         createdAt:
           type: string
-      required:
-        - id
-        - title
-        - amount
-        - category
-        - date
-        - createdAt
+      required: [id, title, amount, category, date, createdAt]
 
     CreateExpenseBody:
       type: object
@@ -506,11 +680,7 @@ components:
           type: ["string", "null"]
         date:
           type: string
-      required:
-        - title
-        - amount
-        - category
-        - date
+      required: [title, amount, category, date]
 
     UpdateExpenseBody:
       type: object
@@ -549,15 +719,7 @@ components:
           type: number
         createdAt:
           type: string
-      required:
-        - id
-        - name
-        - type
-        - currentValue
-        - purchaseValue
-        - gainLoss
-        - gainLossPercent
-        - createdAt
+      required: [id, name, type, currentValue, purchaseValue, gainLoss, gainLossPercent, createdAt]
 
     CreateInvestmentBody:
       type: object
@@ -574,11 +736,7 @@ components:
           type: number
         shares:
           type: ["number", "null"]
-      required:
-        - name
-        - type
-        - currentValue
-        - purchaseValue
+      required: [name, type, currentValue, purchaseValue]
 
     UpdateInvestmentBody:
       type: object
@@ -609,11 +767,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AllocationItem"
-      required:
-        - totalValue
-        - totalGainLoss
-        - totalGainLossPercent
-        - allocation
+      required: [totalValue, totalGainLoss, totalGainLossPercent, allocation]
 
     AllocationItem:
       type: object
@@ -626,11 +780,7 @@ components:
           type: number
         color:
           type: string
-      required:
-        - type
-        - value
-        - percentage
-        - color
+      required: [type, value, percentage, color]
 
     Transaction:
       type: object
@@ -649,13 +799,24 @@ components:
           type: string
         icon:
           type: ["string", "null"]
-      required:
-        - id
-        - title
-        - amount
-        - type
-        - category
-        - date
+      required: [id, title, amount, type, category, date]
+
+    CreateTransactionBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        type:
+          type: string
+        category:
+          type: string
+        date:
+          type: string
+        icon:
+          type: ["string", "null"]
+      required: [title, amount, type, category, date]
 
     Budget:
       type: object
@@ -676,15 +837,7 @@ components:
           type: string
         createdAt:
           type: string
-      required:
-        - id
-        - category
-        - limit
-        - spent
-        - remaining
-        - percentage
-        - color
-        - createdAt
+      required: [id, category, limit, spent, remaining, percentage, color, createdAt]
 
     CreateBudgetBody:
       type: object
@@ -695,10 +848,7 @@ components:
           type: number
         color:
           type: string
-      required:
-        - category
-        - limit
-        - color
+      required: [category, limit, color]
 
     UpdateBudgetBody:
       type: object
@@ -709,3 +859,48 @@ components:
           type: number
         color:
           type: string
+
+    MonthlySummaryItem:
+      type: object
+      properties:
+        month:
+          type: string
+        totalExpenses:
+          type: number
+        totalIncome:
+          type: number
+        netSavings:
+          type: number
+        savingsRate:
+          type: number
+        expenseCount:
+          type: integer
+      required: [month, totalExpenses, totalIncome, netSavings, savingsRate, expenseCount]
+
+    TopExpenseItem:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        count:
+          type: integer
+        percentage:
+          type: number
+        color:
+          type: string
+      required: [category, amount, count, percentage, color]
+
+    NetWorthTrendPoint:
+      type: object
+      properties:
+        month:
+          type: string
+        netWorth:
+          type: number
+        investments:
+          type: number
+        cash:
+          type: number
+      required: [month, netWorth, investments, cash]

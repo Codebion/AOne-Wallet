@@ -279,10 +279,15 @@ function AddInvestmentForm({ onSuccess }: { onSuccess: () => void }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Stock">Stock</SelectItem>
+            <SelectItem value="Mutual Fund">Mutual Fund</SelectItem>
+            <SelectItem value="ETF">ETF</SelectItem>
             <SelectItem value="Crypto">Crypto</SelectItem>
-            <SelectItem value="Real Estate">Real Estate</SelectItem>
             <SelectItem value="Bond">Bond</SelectItem>
-            <SelectItem value="Cash">Cash</SelectItem>
+            <SelectItem value="Real Estate">Real Estate</SelectItem>
+            <SelectItem value="Gold">Gold</SelectItem>
+            <SelectItem value="Fixed Deposit">Fixed Deposit</SelectItem>
+            <SelectItem value="PPF">PPF</SelectItem>
+            <SelectItem value="NPS">NPS</SelectItem>
             <SelectItem value="Other">Other</SelectItem>
           </SelectContent>
         </Select>

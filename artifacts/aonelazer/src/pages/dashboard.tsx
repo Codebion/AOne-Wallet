@@ -111,7 +111,7 @@ export default function Dashboard() {
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false}
-                  tickFormatter={(val) => `$${val/1000}k`}
+                  tickFormatter={(val) => `₹${val/1000}k`}
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
