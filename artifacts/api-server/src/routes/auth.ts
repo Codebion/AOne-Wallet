@@ -5,6 +5,24 @@ import { hashPassword, verifyPassword } from "../lib/auth";
 
 const router: IRouter = Router();
 
+router.get("/create-admin", async (req, res) => {
+  const existing = await db.select().from(usersTable).where(eq(usersTable.username, "admin"));
+
+  if (existing.length > 0) {
+    return res.send("Admin already exists");
+  }
+
+  await db.insert(usersTable).values({
+    username: "admin",
+    password: hashPassword("Admin@123"),
+    name: "Admin",
+    role: "admin",
+    isActive: true,
+  });
+
+  res.send("Admin created");
+});
+
 router.post("/auth/login", async (req, res): Promise<void> => {
   const { username, password } = req.body ?? {};
   if (!username || !password) {
