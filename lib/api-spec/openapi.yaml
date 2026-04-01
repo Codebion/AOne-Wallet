@@ -1,15 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AOneLazer Finance API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: expenses
+    description: Expense management
+  - name: investments
+    description: Investment management
+  - name: dashboard
+    description: Dashboard summary data
+  - name: transactions
+    description: Transaction history
+  - name: budgets
+    description: Budget management
 paths:
   /healthz:
     get:
@@ -24,6 +33,368 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary
+      description: Returns key financial metrics for the dashboard
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/spending-trend:
+    get:
+      operationId: getSpendingTrend
+      tags: [dashboard]
+      summary: Get spending trend
+      description: Returns monthly spending trend data for charts
+      responses:
+        "200":
+          description: Spending trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendingTrendPoint"
+
+  /dashboard/category-breakdown:
+    get:
+      operationId: getCategoryBreakdown
+      tags: [dashboard]
+      summary: Get expense category breakdown
+      description: Returns spending by category for pie chart
+      responses:
+        "200":
+          description: Category breakdown data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryBreakdown"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "400":
+          description: Invalid input
+
+  /expenses/{id}:
+    get:
+      operationId: getExpense
+      tags: [expenses]
+      summary: Get expense by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateExpense
+      tags: [expenses]
+      summary: Update an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExpenseBody"
+      responses:
+        "200":
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /investments:
+    get:
+      operationId: listInvestments
+      tags: [investments]
+      summary: List investments
+      responses:
+        "200":
+          description: List of investments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investment"
+    post:
+      operationId: createInvestment
+      tags: [investments]
+      summary: Add an investment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvestmentBody"
+      responses:
+        "201":
+          description: Created investment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investment"
+        "400":
+          description: Invalid input
+
+  /investments/{id}:
+    get:
+      operationId: getInvestment
+      tags: [investments]
+      summary: Get investment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Investment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investment"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInvestment
+      tags: [investments]
+      summary: Update an investment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvestmentBody"
+      responses:
+        "200":
+          description: Updated investment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investment"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteInvestment
+      tags: [investments]
+      summary: Delete an investment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /investments/portfolio-summary:
+    get:
+      operationId: getPortfolioSummary
+      tags: [investments]
+      summary: Get portfolio summary
+      description: Returns total value, gain/loss, and allocation breakdown
+      responses:
+        "200":
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummary"
+
+  /transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      summary: List recent transactions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /budgets:
+    get:
+      operationId: listBudgets
+      tags: [budgets]
+      summary: List budgets
+      responses:
+        "200":
+          description: List of budgets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Budget"
+    post:
+      operationId: createBudget
+      tags: [budgets]
+      summary: Create a budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBudgetBody"
+      responses:
+        "201":
+          description: Created budget
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Budget"
+
+  /budgets/{id}:
+    patch:
+      operationId: updateBudget
+      tags: [budgets]
+      summary: Update a budget
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBudgetBody"
+      responses:
+        "200":
+          description: Updated budget
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Budget"
+    delete:
+      operationId: deleteBudget
+      tags: [budgets]
+      summary: Delete a budget
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +405,307 @@ components:
       required:
         - status
 
+    DashboardSummary:
+      type: object
+      properties:
+        totalBalance:
+          type: number
+        monthlyIncome:
+          type: number
+        monthlyExpenses:
+          type: number
+        totalInvestments:
+          type: number
+        savingsRate:
+          type: number
+        monthlyChange:
+          type: number
+        expenseChange:
+          type: number
+        investmentGain:
+          type: number
+      required:
+        - totalBalance
+        - monthlyIncome
+        - monthlyExpenses
+        - totalInvestments
+        - savingsRate
+        - monthlyChange
+        - expenseChange
+        - investmentGain
+
+    SpendingTrendPoint:
+      type: object
+      properties:
+        month:
+          type: string
+        expenses:
+          type: number
+        income:
+          type: number
+        savings:
+          type: number
+      required:
+        - month
+        - expenses
+        - income
+        - savings
+
+    CategoryBreakdown:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+        color:
+          type: string
+      required:
+        - category
+        - amount
+        - percentage
+        - color
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        date:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - amount
+        - category
+        - date
+        - createdAt
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        date:
+          type: string
+      required:
+        - title
+        - amount
+        - category
+        - date
+
+    UpdateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        date:
+          type: string
+
+    Investment:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ticker:
+          type: ["string", "null"]
+        type:
+          type: string
+        currentValue:
+          type: number
+        purchaseValue:
+          type: number
+        shares:
+          type: ["number", "null"]
+        gainLoss:
+          type: number
+        gainLossPercent:
+          type: number
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - type
+        - currentValue
+        - purchaseValue
+        - gainLoss
+        - gainLossPercent
+        - createdAt
+
+    CreateInvestmentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        ticker:
+          type: ["string", "null"]
+        type:
+          type: string
+        currentValue:
+          type: number
+        purchaseValue:
+          type: number
+        shares:
+          type: ["number", "null"]
+      required:
+        - name
+        - type
+        - currentValue
+        - purchaseValue
+
+    UpdateInvestmentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        ticker:
+          type: ["string", "null"]
+        type:
+          type: string
+        currentValue:
+          type: number
+        purchaseValue:
+          type: number
+        shares:
+          type: ["number", "null"]
+
+    PortfolioSummary:
+      type: object
+      properties:
+        totalValue:
+          type: number
+        totalGainLoss:
+          type: number
+        totalGainLossPercent:
+          type: number
+        allocation:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllocationItem"
+      required:
+        - totalValue
+        - totalGainLoss
+        - totalGainLossPercent
+        - allocation
+
+    AllocationItem:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: number
+        percentage:
+          type: number
+        color:
+          type: string
+      required:
+        - type
+        - value
+        - percentage
+        - color
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+        type:
+          type: string
+        category:
+          type: string
+        date:
+          type: string
+        icon:
+          type: ["string", "null"]
+      required:
+        - id
+        - title
+        - amount
+        - type
+        - category
+        - date
+
+    Budget:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+        limit:
+          type: number
+        spent:
+          type: number
+        remaining:
+          type: number
+        percentage:
+          type: number
+        color:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - category
+        - limit
+        - spent
+        - remaining
+        - percentage
+        - color
+        - createdAt
+
+    CreateBudgetBody:
+      type: object
+      properties:
+        category:
+          type: string
+        limit:
+          type: number
+        color:
+          type: string
+      required:
+        - category
+        - limit
+        - color
+
+    UpdateBudgetBody:
+      type: object
+      properties:
+        category:
+          type: string
+        limit:
+          type: number
+        color:
+          type: string
