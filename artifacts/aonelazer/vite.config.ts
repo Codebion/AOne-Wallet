@@ -14,6 +14,10 @@ export default defineConfig({
     },
   },
   base: basePath,
+  build: {
+    outDir: "dist/public",
+    emptyOutDir: true,
+  },
   server: {
     port,
     host: "0.0.0.0",
