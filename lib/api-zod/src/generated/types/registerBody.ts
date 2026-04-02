@@ -6,8 +6,9 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface LoginBody {
-  /** Email or username */
-  identifier: string;
+export interface RegisterBody {
+  name: string;
+  email: string;
+  phone: string;
   password: string;
 }

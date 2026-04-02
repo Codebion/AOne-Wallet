@@ -9,8 +9,16 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface RegisterBody {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
 export interface LoginBody {
-  username: string;
+  /** Email or username */
+  identifier: string;
   password: string;
 }
 

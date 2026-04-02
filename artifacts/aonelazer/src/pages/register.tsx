@@ -7,24 +7,40 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 
-export default function Login() {
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
+export default function Register() {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [, setLocation] = useLocation();
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!form.name.trim()) { setError("Full name is required"); return; }
+    if (!form.email.includes("@")) { setError("Enter a valid email address"); return; }
+    if (!/^\d{10}$/.test(form.phone.replace(/\s+/g, ""))) {
+      setError("Enter a valid 10-digit mobile number");
+      return;
+    }
+    if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
+
     setIsLoading(true);
     try {
-      await login({ identifier, password });
+      await register({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        password: form.password,
+      });
       setLocation("/dashboard");
     } catch (err: any) {
-      setError("Invalid email/username or password");
+      setError(err?.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -46,22 +62,56 @@ export default function Login() {
               <div className="w-4 h-4 bg-primary rounded-full shadow-[0_0_15px_theme('colors.primary.DEFAULT')]" />
             </div>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground text-sm mt-1">Sign in to your financial dashboard</p>
+          <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Free forever. Start tracking your finances.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="identifier">Email or Username</Label>
+            <Label htmlFor="name">Full Name</Label>
             <Input
-              id="identifier"
+              id="name"
               type="text"
-              placeholder="you@example.com or username"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Arjun Sharma"
+              value={form.name}
+              onChange={set("name")}
               className="bg-card border-input"
               required
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="arjun@example.com"
+              value={form.email}
+              onChange={set("email")}
+              className="bg-card border-input"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="phone">Mobile Number</Label>
+            <div className="flex gap-2">
+              <div className="flex items-center px-3 bg-card border border-input rounded-md text-sm text-muted-foreground whitespace-nowrap">
+                +91
+              </div>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="98765 43210"
+                value={form.phone}
+                onChange={set("phone")}
+                className="bg-card border-input"
+                maxLength={10}
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -70,8 +120,9 @@ export default function Login() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min. 6 characters"
+                value={form.password}
+                onChange={set("password")}
                 className="bg-card border-input pr-10"
                 required
               />
@@ -94,28 +145,18 @@ export default function Login() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 mt-2"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Creating account..." : "Create Account"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground pt-2">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-medium hover:underline">
-              Create one free
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary font-medium hover:underline">
+              Sign in
             </Link>
           </p>
         </form>
-
-        <div className="mt-6 text-center border border-border bg-card/50 p-4 rounded-lg">
-          <p className="text-xs text-muted-foreground font-medium mb-1">Demo Credentials</p>
-          <p className="font-mono text-xs">
-            Username: <span className="text-foreground">admin</span>
-          </p>
-          <p className="font-mono text-xs">
-            Password: <span className="text-foreground">Admin@123</span>
-          </p>
-        </div>
       </motion.div>
     </div>
   );

@@ -26,6 +26,7 @@ export * from "./loginBody";
 export * from "./monthlySummaryItem";
 export * from "./netWorthTrendPoint";
 export * from "./portfolioSummary";
+export * from "./registerBody";
 export * from "./spendingTrendPoint";
 export * from "./topExpenseItem";
 export * from "./transaction";

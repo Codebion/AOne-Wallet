@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useGetMe, useLogin, useLogout, LoginMutationBody, AuthUser } from "@workspace/api-client-react";
+import {
+  useGetMe,
+  useLogin,
+  useLogout,
+  useRegister,
+  LoginMutationBody,
+  RegisterMutationBody,
+  AuthUser,
+} from "@workspace/api-client-react";
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   login: (data: LoginMutationBody) => Promise<void>;
+  register: (data: RegisterMutationBody) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: AuthUser) => void;
 }
@@ -23,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
+  const registerMutation = useRegister();
 
   useEffect(() => {
     if (!meLoading) {
@@ -39,13 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (data: LoginMutationBody) => {
     return new Promise<void>((resolve, reject) => {
       loginMutation.mutate({ data }, {
-        onSuccess: (userData) => {
-          setUser(userData);
-          resolve();
-        },
-        onError: (err) => {
-          reject(err);
-        }
+        onSuccess: (userData) => { setUser(userData); resolve(); },
+        onError: (err) => reject(err),
+      });
+    });
+  };
+
+  const register = async (data: RegisterMutationBody) => {
+    return new Promise<void>((resolve, reject) => {
+      registerMutation.mutate({ data }, {
+        onSuccess: (userData) => { setUser(userData); resolve(); },
+        onError: (err) => reject(err),
       });
     });
   };
@@ -53,20 +67,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     return new Promise<void>((resolve) => {
       logoutMutation.mutate(undefined, {
-        onSettled: () => {
-          setUser(null);
-          resolve();
-        }
+        onSettled: () => { setUser(null); resolve(); },
       });
     });
   };
 
-  const updateUser = (newUser: AuthUser) => {
-    setUser(newUser);
-  };
+  const updateUser = (newUser: AuthUser) => setUser(newUser);
+
+  const isLoading = isInitializing || loginMutation.isPending || logoutMutation.isPending || registerMutation.isPending;
 
   return (
-    <AuthContext.Provider value={{ user, isLoading: isInitializing || loginMutation.isPending || logoutMutation.isPending, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

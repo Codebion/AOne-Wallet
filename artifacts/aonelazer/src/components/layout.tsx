@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/investments", label: "Investments", icon: LineChart },
   { href: "/budgets", label: "Budgets", icon: Wallet },
@@ -32,7 +32,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col fixed inset-y-0 left-0 z-50">
         <div className="p-6">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+          <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
               <div className="w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_theme('colors.primary.DEFAULT')]" />
             </div>

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Expenses from "@/pages/expenses";
 import Investments from "@/pages/investments";
@@ -13,6 +14,7 @@ import Transactions from "@/pages/transactions";
 import Analytics from "@/pages/analytics";
 import Account from "@/pages/account";
 import Login from "@/pages/login";
+import Register from "@/pages/register";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -21,11 +23,15 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
 
-  if (isLoading) return <div className="flex h-screen items-center justify-center text-primary animate-pulse">Loading...</div>;
-  
-  if (!user) {
-    return <Redirect to="/login" />;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-primary animate-pulse">
+        Loading...
+      </div>
+    );
   }
+
+  if (!user) return <Redirect to="/login" />;
 
   return (
     <AppLayout>
@@ -34,11 +40,29 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   );
 }
 
+function PublicRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-primary animate-pulse">
+        Loading...
+      </div>
+    );
+  }
+
+  if (user) return <Redirect to="/dashboard" />;
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={() => <PublicRoute component={Login} />} />
+      <Route path="/register" component={() => <PublicRoute component={Register} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/expenses" component={() => <ProtectedRoute component={Expenses} />} />
       <Route path="/investments" component={() => <ProtectedRoute component={Investments} />} />
       <Route path="/budgets" component={() => <ProtectedRoute component={Budgets} />} />

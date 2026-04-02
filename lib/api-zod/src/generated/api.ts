@@ -15,10 +15,20 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * @summary Login
+ * @summary Register a new user
+ */
+export const RegisterBody = zod.object({
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string(),
+  password: zod.string(),
+});
+
+/**
+ * @summary Login (email or username + password)
  */
 export const LoginBody = zod.object({
-  username: zod.string(),
+  identifier: zod.string().describe("Email or username"),
   password: zod.string(),
 });
 

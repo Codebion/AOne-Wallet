@@ -1,16 +1,25 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { hashPassword, verifyPassword } from "../lib/auth";
 
 const router: IRouter = Router();
 
+function userResponse(user: typeof usersTable.$inferSelect) {
+  return {
+    id: user.id,
+    username: user.username,
+    name: user.name,
+    email: user.email ?? null,
+    phone: user.phone ?? null,
+    avatar: user.avatar ?? null,
+    role: user.role,
+  };
+}
+
 router.get("/create-admin", async (req, res) => {
   const existing = await db.select().from(usersTable).where(eq(usersTable.username, "admin"));
-
-  if (existing.length > 0) {
-    return res.send("Admin already exists");
-  }
+  if (existing.length > 0) return res.send("Admin already exists");
 
   await db.insert(usersTable).values({
     username: "admin",
@@ -23,16 +32,75 @@ router.get("/create-admin", async (req, res) => {
   res.send("Admin created");
 });
 
-router.post("/auth/login", async (req, res): Promise<void> => {
-  const { username, password } = req.body ?? {};
-  if (!username || !password) {
-    res.status(400).json({ error: "Username and password required" });
+router.post("/auth/register", async (req, res): Promise<void> => {
+  const { name, email, phone, password } = req.body ?? {};
+
+  if (!name || !email || !phone || !password) {
+    res.status(400).json({ error: "Name, email, phone, and password are required" });
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.username, username));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: "Invalid email address" });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email));
+
+  if (existing) {
+    res.status(400).json({ error: "An account with this email already exists" });
+    return;
+  }
+
+  // Generate unique username from email prefix
+  const emailPrefix = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "").toLowerCase() || "user";
+  let username = emailPrefix;
+  let suffix = 1;
+  while (true) {
+    const [taken] = await db.select().from(usersTable).where(eq(usersTable.username, username));
+    if (!taken) break;
+    username = `${emailPrefix}${suffix++}`;
+  }
+
+  const [user] = await db
+    .insert(usersTable)
+    .values({
+      username,
+      password: hashPassword(password),
+      name,
+      email,
+      phone,
+      role: "user",
+      isActive: true,
+    })
+    .returning();
+
+  (req.session as Record<string, unknown>).userId = user.id;
+  res.status(201).json(userResponse(user));
+});
+
+router.post("/auth/login", async (req, res): Promise<void> => {
+  const { identifier, password } = req.body ?? {};
+  if (!identifier || !password) {
+    res.status(400).json({ error: "Email/username and password required" });
+    return;
+  }
+
+  const isEmail = identifier.includes("@");
+  const [user] = isEmail
+    ? await db.select().from(usersTable).where(eq(usersTable.email, identifier))
+    : await db.select().from(usersTable).where(eq(usersTable.username, identifier));
+
   if (!user || !verifyPassword(password, user.password)) {
-    res.status(401).json({ error: "Invalid username or password" });
+    res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
@@ -42,16 +110,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   (req.session as Record<string, unknown>).userId = user.id;
-
-  res.json({
-    id: user.id,
-    username: user.username,
-    name: user.name,
-    email: user.email ?? null,
-    phone: user.phone ?? null,
-    avatar: user.avatar ?? null,
-    role: user.role,
-  });
+  res.json(userResponse(user));
 });
 
 router.post("/auth/logout", (req, res): void => {
@@ -74,15 +133,7 @@ router.get("/auth/me", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({
-    id: user.id,
-    username: user.username,
-    name: user.name,
-    email: user.email ?? null,
-    phone: user.phone ?? null,
-    avatar: user.avatar ?? null,
-    role: user.role,
-  });
+  res.json(userResponse(user));
 });
 
 router.patch("/auth/update-profile", async (req, res): Promise<void> => {
@@ -105,15 +156,7 @@ router.patch("/auth/update-profile", async (req, res): Promise<void> => {
     .where(eq(usersTable.id, userId))
     .returning();
 
-  res.json({
-    id: user.id,
-    username: user.username,
-    name: user.name,
-    email: user.email ?? null,
-    phone: user.phone ?? null,
-    avatar: user.avatar ?? null,
-    role: user.role,
-  });
+  res.json(userResponse(user));
 });
 
 router.post("/auth/change-password", async (req, res): Promise<void> => {
@@ -174,15 +217,7 @@ router.post("/auth/change-username", async (req, res): Promise<void> => {
     .where(eq(usersTable.id, userId))
     .returning();
 
-  res.json({
-    id: updated.id,
-    username: updated.username,
-    name: updated.name,
-    email: updated.email ?? null,
-    phone: updated.phone ?? null,
-    avatar: updated.avatar ?? null,
-    role: updated.role,
-  });
+  res.json(userResponse(updated));
 });
 
 export default router;
