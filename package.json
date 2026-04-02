@@ -14,8 +14,4 @@
     "prettier": "^3.8.1"
   }
 }
-{
-  "scripts": {
-    "start": "node index.js"
-  }
-}
+
