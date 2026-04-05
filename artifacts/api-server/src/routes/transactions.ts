@@ -1,11 +1,13 @@
 import { Router, type IRouter } from "express";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { db, transactionsTable } from "@workspace/db";
 import { ListTransactionsQueryParams } from "@workspace/api-zod";
+import { requireAuth, getUserId } from "../middleware/requireAuth";
 
 const router: IRouter = Router();
 
-router.get("/transactions", async (req, res): Promise<void> => {
+router.get("/transactions", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const query = ListTransactionsQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
@@ -13,28 +15,21 @@ router.get("/transactions", async (req, res): Promise<void> => {
   }
 
   const { limit, type } = query.data;
+  const conditions = [eq(transactionsTable.userId, userId)];
+  if (type) conditions.push(eq(transactionsTable.type, type));
 
-  let q = db
+  const rows = await db
     .select()
     .from(transactionsTable)
+    .where(and(...conditions))
     .orderBy(desc(transactionsTable.date))
-    .limit(limit ?? 50)
-    .$dynamic();
+    .limit(limit ?? 50);
 
-  if (type) {
-    q = q.where(eq(transactionsTable.type, type));
-  }
-
-  const rows = await q;
-  res.json(
-    rows.map((r) => ({
-      ...r,
-      amount: parseFloat(r.amount),
-    }))
-  );
+  res.json(rows.map((r) => ({ ...r, amount: parseFloat(r.amount) })));
 });
 
-router.post("/transactions", async (req, res): Promise<void> => {
+router.post("/transactions", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const { title, amount, type, category, date, icon } = req.body ?? {};
   if (!title || !amount || !type || !category || !date) {
     res.status(400).json({ error: "Missing required fields" });
@@ -43,13 +38,14 @@ router.post("/transactions", async (req, res): Promise<void> => {
 
   const [transaction] = await db
     .insert(transactionsTable)
-    .values({ title, amount: String(amount), type, category, date, icon: icon ?? null })
+    .values({ userId, title, amount: String(amount), type, category, date, icon: icon ?? null })
     .returning();
 
   res.status(201).json({ ...transaction, amount: parseFloat(transaction.amount) });
 });
 
-router.delete("/transactions/:id", async (req, res): Promise<void> => {
+router.delete("/transactions/:id", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid ID" });
@@ -58,7 +54,7 @@ router.delete("/transactions/:id", async (req, res): Promise<void> => {
 
   const [deleted] = await db
     .delete(transactionsTable)
-    .where(eq(transactionsTable.id, id))
+    .where(and(eq(transactionsTable.id, id), eq(transactionsTable.userId, userId)))
     .returning();
 
   if (!deleted) {

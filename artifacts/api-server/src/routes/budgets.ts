@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db, budgetsTable, expensesTable } from "@workspace/db";
 import {
   CreateBudgetBody,
@@ -7,12 +7,13 @@ import {
   UpdateBudgetParams,
   DeleteBudgetParams,
 } from "@workspace/api-zod";
-import { sql } from "drizzle-orm";
+import { requireAuth, getUserId } from "../middleware/requireAuth";
 
 const router: IRouter = Router();
 
-router.get("/budgets", async (_req, res): Promise<void> => {
-  const budgets = await db.select().from(budgetsTable);
+router.get("/budgets", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const budgets = await db.select().from(budgetsTable).where(eq(budgetsTable.userId, userId));
 
   const now = new Date();
   const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -24,7 +25,7 @@ router.get("/budgets", async (_req, res): Promise<void> => {
         .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
         .from(expensesTable)
         .where(
-          sql`${expensesTable.category} = ${budget.category} AND ${expensesTable.date} >= ${firstOfMonth} AND ${expensesTable.date} <= ${lastOfMonth}`
+          sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.category} = ${budget.category} AND ${expensesTable.date} >= ${firstOfMonth} AND ${expensesTable.date} <= ${lastOfMonth}`
         );
 
       const spent = parseFloat(row?.total ?? "0");
@@ -45,7 +46,8 @@ router.get("/budgets", async (_req, res): Promise<void> => {
   res.json(result);
 });
 
-router.post("/budgets", async (req, res): Promise<void> => {
+router.post("/budgets", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const parsed = CreateBudgetBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -54,7 +56,7 @@ router.post("/budgets", async (req, res): Promise<void> => {
 
   const [budget] = await db
     .insert(budgetsTable)
-    .values({ ...parsed.data, limit: String(parsed.data.limit) })
+    .values({ ...parsed.data, userId, limit: String(parsed.data.limit) })
     .returning();
 
   res.status(201).json({
@@ -66,7 +68,8 @@ router.post("/budgets", async (req, res): Promise<void> => {
   });
 });
 
-router.patch("/budgets/:id", async (req, res): Promise<void> => {
+router.patch("/budgets/:id", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const params = UpdateBudgetParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -85,7 +88,7 @@ router.patch("/budgets/:id", async (req, res): Promise<void> => {
   const [budget] = await db
     .update(budgetsTable)
     .set(updateData)
-    .where(eq(budgetsTable.id, params.data.id))
+    .where(and(eq(budgetsTable.id, params.data.id), eq(budgetsTable.userId, userId)))
     .returning();
 
   if (!budget) {
@@ -102,7 +105,8 @@ router.patch("/budgets/:id", async (req, res): Promise<void> => {
   });
 });
 
-router.delete("/budgets/:id", async (req, res): Promise<void> => {
+router.delete("/budgets/:id", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const params = DeleteBudgetParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -111,7 +115,7 @@ router.delete("/budgets/:id", async (req, res): Promise<void> => {
 
   const [deleted] = await db
     .delete(budgetsTable)
-    .where(eq(budgetsTable.id, params.data.id))
+    .where(and(eq(budgetsTable.id, params.data.id), eq(budgetsTable.userId, userId)))
     .returning();
 
   if (!deleted) {

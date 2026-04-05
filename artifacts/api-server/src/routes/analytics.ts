@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, expensesTable, investmentsTable } from "@workspace/db";
-import { sql, desc } from "drizzle-orm";
+import { sql, desc, eq } from "drizzle-orm";
+import { requireAuth, getUserId } from "../middleware/requireAuth";
 
 const router: IRouter = Router();
 
@@ -21,7 +22,8 @@ const categoryColors: Record<string, string> = {
   Other: "#94a3b8",
 };
 
-router.get("/analytics/monthly-summary", async (_req, res): Promise<void> => {
+router.get("/analytics/monthly-summary", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const now = new Date();
   const results = [];
 
@@ -38,20 +40,17 @@ router.get("/analytics/monthly-summary", async (_req, res): Promise<void> => {
         count: sql<string>`count(*)`,
       })
       .from(expensesTable)
-      .where(sql`${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const totalExpenses = parseFloat(row?.total ?? "0");
     const expenseCount = parseInt(row?.count ?? "0");
-    const totalIncome = 85000;
-    const netSavings = totalIncome - totalExpenses;
-    const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
 
     results.push({
       month: label,
       totalExpenses: Math.round(totalExpenses * 100) / 100,
-      totalIncome,
-      netSavings: Math.round(netSavings * 100) / 100,
-      savingsRate: Math.round(savingsRate * 10) / 10,
+      totalIncome: 0,
+      netSavings: Math.round(-totalExpenses * 100) / 100,
+      savingsRate: 0,
       expenseCount,
     });
   }
@@ -59,7 +58,8 @@ router.get("/analytics/monthly-summary", async (_req, res): Promise<void> => {
   res.json(results);
 });
 
-router.get("/analytics/top-expenses", async (_req, res): Promise<void> => {
+router.get("/analytics/top-expenses", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const rows = await db
     .select({
       category: expensesTable.category,
@@ -67,6 +67,7 @@ router.get("/analytics/top-expenses", async (_req, res): Promise<void> => {
       count: sql<string>`count(*)`,
     })
     .from(expensesTable)
+    .where(eq(expensesTable.userId, userId))
     .groupBy(expensesTable.category)
     .orderBy(desc(sql`sum(${expensesTable.amount})`));
 
@@ -83,11 +84,12 @@ router.get("/analytics/top-expenses", async (_req, res): Promise<void> => {
   );
 });
 
-router.get("/analytics/net-worth-trend", async (_req, res): Promise<void> => {
+router.get("/analytics/net-worth-trend", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const now = new Date();
   const results = [];
 
-  const investments = await db.select().from(investmentsTable);
+  const investments = await db.select().from(investmentsTable).where(eq(investmentsTable.userId, userId));
   const totalInvestments = investments.reduce((s, i) => s + parseFloat(i.currentValue), 0);
 
   for (let i = 5; i >= 0; i--) {
@@ -100,20 +102,17 @@ router.get("/analytics/net-worth-trend", async (_req, res): Promise<void> => {
     const [row] = await db
       .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
       .from(expensesTable)
-      .where(sql`${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const expenses = parseFloat(row?.total ?? "0");
-    const income = 85000;
-    const cash = income - expenses;
-    const investmentFactor = 1 - (i * 0.02);
-    const investmentsForMonth = totalInvestments * investmentFactor;
-    const netWorth = cash + investmentsForMonth;
+    const investmentsForMonth = i === 0 ? totalInvestments : 0;
+    const netWorth = investmentsForMonth - expenses;
 
     results.push({
       month: label,
       netWorth: Math.round(netWorth * 100) / 100,
       investments: Math.round(investmentsForMonth * 100) / 100,
-      cash: Math.round(cash * 100) / 100,
+      cash: Math.round(-expenses * 100) / 100,
     });
   }
 

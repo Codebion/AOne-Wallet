@@ -1,11 +1,13 @@
 import { Router, type IRouter } from "express";
 import { db, expensesTable, investmentsTable } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { requireAuth, getUserId } from "../middleware/requireAuth";
 
 const router: IRouter = Router();
 
-router.get("/dashboard/summary", async (_req, res): Promise<void> => {
+router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -18,23 +20,23 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
   const [currentExpenses] = await db
     .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
     .from(expensesTable)
-    .where(sql`${expensesTable.date} like ${monthStr + "%"}`);
+    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
   const [prevExpenses] = await db
     .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
     .from(expensesTable)
-    .where(sql`${expensesTable.date} like ${prevMonthStr + "%"}`);
+    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${prevMonthStr + "%"}`);
 
-  const investments = await db.select().from(investmentsTable);
+  const investments = await db.select().from(investmentsTable).where(eq(investmentsTable.userId, userId));
 
   const totalInvestments = investments.reduce((sum, i) => sum + parseFloat(i.currentValue), 0);
   const totalPurchase = investments.reduce((sum, i) => sum + parseFloat(i.purchaseValue), 0);
 
   const monthlyExpenses = parseFloat(currentExpenses?.total ?? "0");
   const prevMonthlyExpenses = parseFloat(prevExpenses?.total ?? "0");
-  const monthlyIncome = 8500;
-  const totalBalance = monthlyIncome - monthlyExpenses + totalInvestments;
-  const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0;
+
+  const totalBalance = totalInvestments - monthlyExpenses;
+  const savingsRate = 0;
 
   const expenseChange = prevMonthlyExpenses > 0
     ? ((monthlyExpenses - prevMonthlyExpenses) / prevMonthlyExpenses) * 100
@@ -46,17 +48,18 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
 
   res.json({
     totalBalance: Math.round(totalBalance * 100) / 100,
-    monthlyIncome,
+    monthlyIncome: 0,
     monthlyExpenses: Math.round(monthlyExpenses * 100) / 100,
     totalInvestments: Math.round(totalInvestments * 100) / 100,
     savingsRate: Math.round(savingsRate * 10) / 10,
-    monthlyChange: 2.4,
+    monthlyChange: Math.round(expenseChange * 10) / 10,
     expenseChange: Math.round(expenseChange * 10) / 10,
     investmentGain: Math.round(investmentGain * 10) / 10,
   });
 });
 
-router.get("/dashboard/spending-trend", async (_req, res): Promise<void> => {
+router.get("/dashboard/spending-trend", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const now = new Date();
   const months = [];
 
@@ -65,29 +68,28 @@ router.get("/dashboard/spending-trend", async (_req, res): Promise<void> => {
     const year = d.getFullYear();
     const month = d.getMonth() + 1;
     const monthStr = `${year}-${String(month).padStart(2, "0")}`;
-    const monthLabel = d.toLocaleString("en-US", { month: "short" });
+    const monthLabel = d.toLocaleString("en-IN", { month: "short" });
 
     const [row] = await db
       .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
       .from(expensesTable)
-      .where(sql`${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const expenses = parseFloat(row?.total ?? "0");
-    const income = 8500 + Math.round((Math.random() * 1000 - 500) * 100) / 100;
-    const savings = income - expenses;
 
     months.push({
       month: monthLabel,
       expenses: Math.round(expenses * 100) / 100,
-      income,
-      savings: Math.round(savings * 100) / 100,
+      income: 0,
+      savings: Math.round(-expenses * 100) / 100,
     });
   }
 
   res.json(months);
 });
 
-router.get("/dashboard/category-breakdown", async (_req, res): Promise<void> => {
+router.get("/dashboard/category-breakdown", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -99,7 +101,7 @@ router.get("/dashboard/category-breakdown", async (_req, res): Promise<void> => 
       total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)`,
     })
     .from(expensesTable)
-    .where(sql`${expensesTable.date} like ${monthStr + "%"}`)
+    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`)
     .groupBy(expensesTable.category)
     .orderBy(desc(sql`sum(${expensesTable.amount})`));
 
@@ -122,10 +124,9 @@ router.get("/dashboard/category-breakdown", async (_req, res): Promise<void> => 
     rows.map((r) => ({
       category: r.category,
       amount: Math.round(parseFloat(r.total) * 100) / 100,
-      percentage:
-        totalAmount > 0
-          ? Math.round((parseFloat(r.total) / totalAmount) * 10000) / 100
-          : 0,
+      percentage: totalAmount > 0
+        ? Math.round((parseFloat(r.total) / totalAmount) * 10000) / 100
+        : 0,
       color: categoryColors[r.category] ?? "#94a3b8",
     }))
   );

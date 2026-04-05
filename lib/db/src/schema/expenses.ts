@@ -1,9 +1,11 @@
-import { pgTable, text, serial, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const expensesTable = pgTable("expenses", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   category: text("category").notNull(),
@@ -14,6 +16,7 @@ export const expensesTable = pgTable("expenses", {
 
 export const insertExpenseSchema = createInsertSchema(expensesTable).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
