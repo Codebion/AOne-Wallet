@@ -13,7 +13,9 @@ import {
   IndianRupee,
   Bell,
   Layers,
+  BookOpen,
 } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const features = [
   {
@@ -112,6 +114,10 @@ function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3">
+          <Link href="/blog" className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <BookOpen className="w-4 h-4" />
+            Blog
+          </Link>
           <Link href="/login">
             <button className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-secondary transition-colors">
               Login
@@ -131,6 +137,19 @@ function Navbar() {
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEO
+        title="AOneLazer Finance — Free Indian Personal Finance Dashboard"
+        description="Track expenses, investments, and budgets in one place. AOneLazer Finance is a free, privacy-first personal finance tool built for India with INR support, 25 currencies, and powerful analytics."
+        keywords="personal finance India, expense tracker, investment portfolio, budget planner, INR, mutual funds tracker, financial dashboard"
+        type="website"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "AOneLazer Finance",
+          "description": "Free Indian personal finance dashboard for expense tracking, investments, and budgets",
+          "url": "https://aonelazer.com",
+        }}
+      />
       <Navbar />
 
       {/* Hero */}

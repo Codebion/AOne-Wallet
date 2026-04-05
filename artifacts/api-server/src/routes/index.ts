@@ -7,6 +7,7 @@ import budgetsRouter from "./budgets";
 import transactionsRouter from "./transactions";
 import dashboardRouter from "./dashboard";
 import analyticsRouter from "./analytics";
+import blogRouter from "./blog";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(investmentsRouter);
 router.use(budgetsRouter);
 router.use(transactionsRouter);
 router.use(analyticsRouter);
+router.use(blogRouter);
 
 export default router;

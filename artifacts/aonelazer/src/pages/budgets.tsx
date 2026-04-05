@@ -6,7 +6,8 @@ import {
   useUpdateBudget,
   getListBudgetsQueryKey 
 } from "@workspace/api-client-react";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 export default function Budgets() {
+  const { formatAmount } = useCurrency();
   const { data: budgets, isLoading } = useListBudgets();
   const queryClient = useQueryClient();
   const deleteMutation = useDeleteBudget();
@@ -128,12 +130,12 @@ export default function Budgets() {
                   <div>
                     <span className="text-muted-foreground">SPENT: </span>
                     <span className={isOver ? "text-destructive font-medium" : "text-foreground"}>
-                      {formatCurrency(budget.spent)}
+                      {formatAmount(budget.spent)}
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-muted-foreground">LIMIT: </span>
-                    <span className="text-foreground">{formatCurrency(budget.limit)}</span>
+                    <span className="text-foreground">{formatAmount(budget.limit)}</span>
                   </div>
                 </div>
 
@@ -152,7 +154,7 @@ export default function Budgets() {
                     {formatPercent(budget.percentage)} used
                   </span>
                   <span className="text-muted-foreground">
-                    {budget.remaining >= 0 ? `${formatCurrency(budget.remaining)} left` : `${formatCurrency(Math.abs(budget.remaining))} over`}
+                    {budget.remaining >= 0 ? `${formatAmount(budget.remaining)} left` : `${formatAmount(Math.abs(budget.remaining))} over`}
                   </span>
                 </div>
               </motion.div>

@@ -7,7 +7,8 @@ import {
   getListInvestmentsQueryKey, 
   getGetPortfolioSummaryQueryKey 
 } from "@workspace/api-client-react";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,6 +21,7 @@ import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Investments() {
+  const { formatAmount } = useCurrency();
   const { data: summary, isLoading: loadingSummary } = useGetPortfolioSummary();
   const { data: investments, isLoading: loadingInvestments } = useListInvestments();
   const queryClient = useQueryClient();
@@ -73,10 +75,10 @@ export default function Investments() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
             <p className="text-sm text-muted-foreground mb-2 relative z-10">Total Portfolio Value</p>
-            <h2 className="text-4xl font-bold font-mono tracking-tight relative z-10">{formatCurrency(summary.totalValue)}</h2>
+            <h2 className="text-4xl font-bold font-mono tracking-tight relative z-10">{formatAmount(summary.totalValue)}</h2>
             
             <div className={`mt-4 flex items-center gap-2 font-mono text-sm px-3 py-1.5 rounded-full border ${summary.totalGainLoss >= 0 ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/10' : 'text-destructive border-destructive/20 bg-destructive/10'} relative z-10`}>
-              <span>{summary.totalGainLoss >= 0 ? '+' : ''}{formatCurrency(summary.totalGainLoss)}</span>
+              <span>{summary.totalGainLoss >= 0 ? '+' : ''}{formatAmount(summary.totalGainLoss)}</span>
               <span>({summary.totalGainLoss >= 0 ? '+' : ''}{summary.totalGainLossPercent.toFixed(2)}%)</span>
               <span className="text-muted-foreground text-xs ml-1">All time</span>
             </div>
@@ -107,7 +109,7 @@ export default function Investments() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatAmount(value)}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -170,7 +172,7 @@ export default function Investments() {
                     <div className="flex flex-col font-mono">
                       {inv.shares && inv.shares > 0 ? (
                         <>
-                          <span className="text-sm">{formatCurrency(inv.currentValue / inv.shares)}</span>
+                          <span className="text-sm">{formatAmount(inv.currentValue / inv.shares)}</span>
                           <span className="text-xs text-muted-foreground">{inv.shares} shrs</span>
                         </>
                       ) : (
@@ -179,11 +181,11 @@ export default function Investments() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-mono font-medium">
-                    {formatCurrency(inv.currentValue)}
+                    {formatAmount(inv.currentValue)}
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     <div className={`flex flex-col ${inv.gainLoss >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
-                      <span className="text-sm">{inv.gainLoss >= 0 ? '+' : ''}{formatCurrency(inv.gainLoss)}</span>
+                      <span className="text-sm">{inv.gainLoss >= 0 ? '+' : ''}{formatAmount(inv.gainLoss)}</span>
                       <span className="text-xs">{inv.gainLossPercent >= 0 ? '+' : ''}{inv.gainLossPercent.toFixed(2)}%</span>
                     </div>
                   </TableCell>

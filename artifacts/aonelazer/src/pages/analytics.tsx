@@ -4,7 +4,8 @@ import {
   useGetTopExpenses, 
   useGetNetWorthTrend 
 } from "@workspace/api-client-react";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   AreaChart, Area, ComposedChart
@@ -13,6 +14,7 @@ import { motion } from "framer-motion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function Analytics() {
+  const { formatAmount } = useCurrency();
   const { data: monthlySummary, isLoading: loadingMonthly } = useGetMonthlySummary();
   const { data: topExpenses, isLoading: loadingTop } = useGetTopExpenses();
   const { data: netWorthTrend, isLoading: loadingNetWorth } = useGetNetWorthTrend();
@@ -64,7 +66,7 @@ export default function Analytics() {
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatAmount(value)}
                   />
                   <Legend />
                   <Area type="monotone" dataKey="netWorth" name="Net Worth" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorNetWorth)" />
@@ -101,7 +103,7 @@ export default function Analytics() {
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatAmount(value)}
                   />
                   <Legend />
                   <Bar dataKey="totalIncome" name="Income" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
@@ -132,7 +134,7 @@ export default function Analytics() {
                     <Tooltip 
                       cursor={{fill: 'transparent'}}
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: number) => formatAmount(value)}
                     />
                     <Bar dataKey="amount" barSize={20} radius={[0, 4, 4, 0]}>
                       {topExpenses.map((entry, index) => (
@@ -158,7 +160,7 @@ export default function Analytics() {
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: expense.color || 'hsl(var(--primary))' }} />
                         {expense.category}
                       </TableCell>
-                      <TableCell className="text-right font-mono">{formatCurrency(expense.amount)}</TableCell>
+                      <TableCell className="text-right font-mono">{formatAmount(expense.amount)}</TableCell>
                       <TableCell className="text-right font-mono">{formatPercent(expense.percentage)}</TableCell>
                     </TableRow>
                   ))}

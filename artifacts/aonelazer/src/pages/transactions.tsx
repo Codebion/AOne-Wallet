@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useListTransactions } from "@workspace/api-client-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Transactions() {
+  const { formatAmount } = useCurrency();
   const [typeFilter, setTypeFilter] = useState<string>("all");
   
   const { data: transactions, isLoading } = useListTransactions(
@@ -88,7 +90,7 @@ export default function Transactions() {
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       <span className={isPositive ? 'text-emerald-500' : 'text-foreground'}>
-                        {isPositive ? '+' : '-'}{formatCurrency(tx.amount)}
+                        {isPositive ? '+' : '-'}{formatAmount(tx.amount)}
                       </span>
                     </TableCell>
                   </TableRow>

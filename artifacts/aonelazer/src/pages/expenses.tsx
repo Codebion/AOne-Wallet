@@ -6,7 +6,8 @@ import {
   useListBudgets,
   getListExpensesQueryKey 
 } from "@workspace/api-client-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ const defaultCategories = [
 ];
 
 export default function Expenses() {
+  const { formatAmount } = useCurrency();
   const { data: expenses, isLoading } = useListExpenses();
   const queryClient = useQueryClient();
   const deleteMutation = useDeleteExpense();
@@ -94,7 +96,7 @@ export default function Expenses() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-mono text-destructive">
-                    -{formatCurrency(expense.amount)}
+                    -{formatAmount(expense.amount)}
                   </TableCell>
                   <TableCell>
                     <Button 

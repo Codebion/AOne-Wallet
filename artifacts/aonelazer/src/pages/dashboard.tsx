@@ -8,7 +8,8 @@ import {
   useGetPortfolioSummary,
   useListBudgets,
 } from "@workspace/api-client-react";
-import { formatCurrency, formatPercent, formatDate } from "@/lib/format";
+import { formatPercent, formatDate } from "@/lib/format";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -23,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { formatAmount } = useCurrency();
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary();
   const { data: trend, isLoading: loadingTrend } = useGetSpendingTrend();
   const { data: categories, isLoading: loadingCategories } = useGetCategoryBreakdown();
@@ -147,7 +149,7 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                     itemStyle={{ color: "hsl(var(--foreground))" }}
-                    formatter={(val: number) => [formatCurrency(val), "Expenses"]}
+                    formatter={(val: number) => [formatAmount(val), "Expenses"]}
                   />
                   <Area type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
                 </AreaChart>
@@ -203,7 +205,7 @@ export default function Dashboard() {
                     </Pie>
                     <Tooltip
                       contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                      formatter={(value: number) => [formatCurrency(value), ""]}
+                      formatter={(value: number) => [formatAmount(value), ""]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -255,10 +257,10 @@ export default function Dashboard() {
             <div className="space-y-5">
               <div className="relative overflow-hidden rounded-lg p-4 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
                 <p className="text-xs text-muted-foreground mb-1">Total Value</p>
-                <h3 className="text-xl sm:text-2xl font-bold font-mono">{formatCurrency(portfolio.totalValue)}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold font-mono">{formatAmount(portfolio.totalValue)}</h3>
                 <div className={`flex items-center gap-1 mt-1 text-xs font-mono ${portfolio.totalGainLoss >= 0 ? "text-emerald-500" : "text-destructive"}`}>
                   {portfolio.totalGainLoss >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                  <span>{formatCurrency(Math.abs(portfolio.totalGainLoss))}</span>
+                  <span>{formatAmount(Math.abs(portfolio.totalGainLoss))}</span>
                   <span>({portfolio.totalGainLossPercent.toFixed(2)}%)</span>
                 </div>
               </div>
@@ -316,7 +318,7 @@ export default function Dashboard() {
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-medium">{budget.category}</span>
                       <span className="text-muted-foreground font-mono">
-                        {formatCurrency(budget.spent)} / {formatCurrency(budget.limit)}
+                        {formatAmount(budget.spent)} / {formatAmount(budget.limit)}
                       </span>
                     </div>
                     <div className="relative h-1.5 w-full bg-secondary rounded-full overflow-hidden">
@@ -386,7 +388,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <span className={`font-mono text-sm flex-shrink-0 ml-2 ${isPositive ? "text-emerald-500" : "text-foreground"}`}>
-                      {isPositive ? "+" : "-"}{formatCurrency(tx.amount)}
+                      {isPositive ? "+" : "-"}{formatAmount(tx.amount)}
                     </span>
                   </div>
                 );
@@ -424,6 +426,7 @@ function MetricCard({
   isPercent?: boolean;
   delay: number;
 }) {
+  const { formatAmount } = useCurrency();
   const isPositive = change > 0;
   const isGood = neutralChange ? true : inverse ? !isPositive : isPositive;
   const changeColor = neutralChange
@@ -443,7 +446,7 @@ function MetricCard({
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <p className="text-xs sm:text-sm text-muted-foreground mb-1 font-medium">{title}</p>
       <h3 className="text-lg sm:text-2xl font-bold font-mono tracking-tight">
-        {isPercent ? `${value.toFixed(1)}%` : formatCurrency(value)}
+        {isPercent ? `${value.toFixed(1)}%` : formatAmount(value)}
       </h3>
       {change !== 0 && (
         <div className={`flex items-center gap-1 mt-2 text-xs font-mono ${changeColor}`}>

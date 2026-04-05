@@ -17,6 +17,8 @@ pnpm workspace monorepo using TypeScript. Currency: INR (₹), locale: en-IN.
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 - **Frontend**: React + Vite + TailwindCSS + shadcn/ui + Recharts
+- **SEO**: react-helmet-async
+- **Blog content**: react-markdown + remark-gfm
 
 ## Structure
 
@@ -28,51 +30,66 @@ artifacts-monorepo/
 ├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-└── scripts/                # Utility scripts
+│   └── db/                 # Drizzle schema + DB client
 ```
 
-## Features
+## Key Features
 
-- **Auth**: Session-based login/logout (express-session + connect-pg-simple)
-  - Admin user: username `admin`, password `Admin@123`
-  - SHA-256 hashing with salt `aonelazer_salt_2026`
-- **Theme**: Dark / Light / System toggle (ThemeContext)
-- **Dashboard**: Summary cards, spending trend chart, category breakdown, recent transactions, portfolio
-- **Expenses**: CRUD with category, tags, date; INR formatting
-- **Investments**: CRUD with types: Stock, Mutual Fund, ETF, Crypto, Bond, Real Estate, Gold, Fixed Deposit, PPF, NPS, Other
-- **Budgets**: Monthly budget tracking by category; progress bars with color warnings (green/amber/red)
-- **Transactions**: Combined view of expenses + investments
-- **Analytics**: Net Worth Trend, Monthly Summary, Top Expense Categories charts
-- **Account**: Update profile, change username, change password
+- **Auth**: Register/login with session (express-session). `session.userId` + `session.isAdmin` set on login. Admin role check via `session.isAdmin`. Admin credentials: `admin` / `Admin@123`.
+- **Per-user data isolation**: All data tables (expenses, investments, budgets, transactions) have `userId` FK, all API routes filter by session userId via `requireAuth` middleware.
+- **Currency system**: `CurrencyContext.tsx` with 25 currencies (INR base). Exchange rates applied on display. `formatAmount()` hook used throughout all pages. Selection persisted in localStorage.
+- **SEO system**: `SEO.tsx` component with full meta tags (title, description, keywords, canonical, OG, Twitter Card, JSON-LD). Used on landing, blog, and all blog post pages. Named + default export both available.
+- **Blog system**: `blog_posts` DB table with slug, content, SEO fields, publish/draft workflow. Admin-only CRUD via `requireAdmin` middleware (`session.isAdmin`). Public blog list + individual post pages. Admin panel with markdown editor + SEO preview.
+- **Theme**: dark/light/system via `ThemeContext`. Persisted to localStorage.
+- **Responsive layout**: Desktop sidebar with currency picker + theme toggle. Mobile drawer sidebar + bottom tab bar. Currency picker available in both mobile header and desktop sidebar.
 
-## Key Files
+## API Routes
 
-- `artifacts/aonelazer/src/App.tsx` — Router + AuthProvider + ThemeProvider
-- `artifacts/aonelazer/src/contexts/AuthContext.tsx` — Auth state management
-- `artifacts/aonelazer/src/contexts/ThemeContext.tsx` — Theme state management
-- `artifacts/aonelazer/src/lib/format.ts` — `formatINR`, `formatCurrency`, `formatDate`
-- `artifacts/aonelazer/src/index.css` — CSS variables for light/dark themes
-- `artifacts/api-server/src/app.ts` — Express + session middleware
-- `artifacts/api-server/src/routes/auth.ts` — Login, logout, /me endpoints
-- `artifacts/api-server/src/routes/analytics.ts` — Monthly summary, top expenses, net worth trend
-- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for codegen)
-- `lib/db/src/schema/` — Drizzle schema (users, expenses, investments, budgets, transactions)
+- `POST /api/auth/register` — register user (sets `session.userId`, `session.isAdmin`)
+- `POST /api/auth/login` — login (sets `session.userId`, `session.isAdmin`)
+- `POST /api/auth/logout` — clear session
+- `GET /api/auth/me` — get current user
+- `GET/POST /api/expenses` — expense CRUD (auth required)
+- `GET/POST /api/investments` — investment CRUD (auth required)
+- `GET/POST /api/budgets` — budget CRUD (auth required)
+- `GET /api/transactions` — transactions list (auth required)
+- `GET /api/dashboard/summary` — dashboard metrics (auth required)
+- `GET /api/analytics/*` — analytics endpoints (auth required)
+- `GET /api/blog/posts` — public blog list (published only)
+- `GET /api/blog/posts/:slug` — public blog post
+- `POST /api/blog/posts` — create post (admin only)
+- `PUT /api/blog/posts/:id` — update post (admin only)
+- `DELETE /api/blog/posts/:id` — delete post (admin only)
 
-## Development
+## Frontend Routes
 
-```bash
-# Run codegen after updating openapi.yaml
-pnpm --filter @workspace/api-spec run codegen
+- `/` — Landing page (public, SEO'd)
+- `/login` — Login (public only, redirects to /dashboard if authed)
+- `/register` — Register (public only)
+- `/blog` — Blog list with search + tag filter (public)
+- `/blog/:slug` — Blog post (public, SEO + JSON-LD)
+- `/dashboard` — Overview dashboard (auth required)
+- `/expenses` — Expense tracker (auth required)
+- `/investments` — Investment portfolio (auth required)
+- `/budgets` — Budget tracker (auth required)
+- `/transactions` — Transaction history (auth required)
+- `/analytics` — Analytics & charts (auth required)
+- `/account` — Account settings (auth required)
+- `/admin/blog` — Blog management panel (auth required, admin UI)
 
-# Push DB schema changes
-pnpm --filter @workspace/db run db:push
+## DB Tables
 
-# Seed sample data
-pnpm --filter @workspace/db run db:seed
-```
+- `users` — id, username, email, password (sha256+salt), name, mobile, role, isActive
+- `expenses` — id, userId, title, amount (INR), category, date, notes
+- `investments` — id, userId, name, type (11 types), buyPrice, currentPrice, quantity, date
+- `budgets` — id, userId, category, limit (INR), period
+- `transactions` — id, userId, title, amount, type (income/expense/transfer), category, date
+- `blog_posts` — id, slug, title, content (markdown), excerpt, metaTitle, metaDescription, canonicalUrl, ogImage, tags, published, authorId
 
-## Monthly Income
+## Important Notes
 
-₹85,000 (used for dashboard calculations and budget savings rate)
+- All amounts stored as INR in DB; `CurrencyContext` converts on display
+- Investment types: Stocks, Mutual Funds, ETF, Gold, Fixed Deposit, PPF, NPS, Crypto, Bonds, Real Estate, Other
+- Do NOT use emojis in app UI (flags in CurrencyContext are for the currency picker only)
+- `useGetMe` uses `{ query: { retry: false } }` to avoid looping on 401
+- Monthly income not tracked (shown as 0); savings rate = 0

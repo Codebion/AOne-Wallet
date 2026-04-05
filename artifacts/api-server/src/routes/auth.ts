@@ -110,6 +110,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   (req.session as Record<string, unknown>).userId = user.id;
+  (req.session as Record<string, unknown>).isAdmin = user.role === "admin";
   res.json(userResponse(user));
 });
 
