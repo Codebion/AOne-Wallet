@@ -20,12 +20,12 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
   const [currentExpenses] = await db
     .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
     .from(expensesTable)
-    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
+    .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
   const [prevExpenses] = await db
     .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
     .from(expensesTable)
-    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${prevMonthStr + "%"}`);
+    .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${prevMonthStr + "%"}`);
 
   const investments = await db.select().from(investmentsTable).where(eq(investmentsTable.userId, userId));
 
@@ -73,7 +73,7 @@ router.get("/dashboard/spending-trend", requireAuth, async (req, res): Promise<v
     const [row] = await db
       .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
       .from(expensesTable)
-      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const expenses = parseFloat(row?.total ?? "0");
 
@@ -101,7 +101,7 @@ router.get("/dashboard/category-breakdown", requireAuth, async (req, res): Promi
       total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)`,
     })
     .from(expensesTable)
-    .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`)
+    .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`)
     .groupBy(expensesTable.category)
     .orderBy(desc(sql`sum(${expensesTable.amount})`));
 

@@ -25,7 +25,7 @@ router.get("/budgets", requireAuth, async (req, res): Promise<void> => {
         .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
         .from(expensesTable)
         .where(
-          sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.category} = ${budget.category} AND ${expensesTable.date} >= ${firstOfMonth} AND ${expensesTable.date} <= ${lastOfMonth}`
+          sql`${expensesTable.userId} = ${userId} AND ${expensesTable.category} = ${budget.category} AND ${expensesTable.date} >= ${firstOfMonth} AND ${expensesTable.date} <= ${lastOfMonth}`
         );
 
       const spent = parseFloat(row?.total ?? "0");

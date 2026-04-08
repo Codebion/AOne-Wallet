@@ -40,7 +40,7 @@ router.get("/analytics/monthly-summary", requireAuth, async (req, res): Promise<
         count: sql<string>`count(*)`,
       })
       .from(expensesTable)
-      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const totalExpenses = parseFloat(row?.total ?? "0");
     const expenseCount = parseInt(row?.count ?? "0");
@@ -102,7 +102,7 @@ router.get("/analytics/net-worth-trend", requireAuth, async (req, res): Promise<
     const [row] = await db
       .select({ total: sql<string>`coalesce(sum(${expensesTable.amount}), 0)` })
       .from(expensesTable)
-      .where(sql`${expensesTable.user_id} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
+      .where(sql`${expensesTable.userId} = ${userId} AND ${expensesTable.date} like ${monthStr + "%"}`);
 
     const expenses = parseFloat(row?.total ?? "0");
     const investmentsForMonth = i === 0 ? totalInvestments : 0;
